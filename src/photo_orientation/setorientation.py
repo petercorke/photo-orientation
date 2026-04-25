@@ -34,7 +34,12 @@ def initialize_predictor():
     torch = torch_module
     Image = PILImage
 
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     model = models.efficientnet_v2_s()
     classifier_layer = model.classifier[1]
     in_features = getattr(classifier_layer, "in_features", None)
