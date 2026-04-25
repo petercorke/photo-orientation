@@ -7,7 +7,7 @@ Tools to inspect and update image orientation metadata (EXIF and XMP).
 - Read EXIF and XMP orientation values.
 - Check for EXIF/XMP mismatches across files or nested folders.
 - Set a fixed orientation value directly.
-- Optional ML-based auto-orientation mode with lazy imports.
+- Optional [ML-based auto-orientation mode](https://huggingface.co/DuarteBarbosa/deep-image-orientation-detection) with lazy imports.
 
 ## Project Layout
 
@@ -60,7 +60,7 @@ setorientation --set 1 path/to/file.jpg path/to/other.jpg
 ```
 
 - `--set` mode does not require the optional `auto` dependencies.
-- Without `--set`, the tool uses the ML model to predict and set orientation.
+- Without `--set`, the tool uses the [ML model](https://huggingface.co/DuarteBarbosa/deep-image-orientation-detection) to predict and set orientation.
 
 ## Development
 
