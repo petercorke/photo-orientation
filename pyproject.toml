@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "photo-orientation"
+version = "0.1.0"
+description = "Tools to read, check, and set image orientation metadata."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["ansitable"]
+
+[project.optional-dependencies]
+auto = ["Pillow", "torch", "torchvision", "huggingface_hub"]
+
+[project.scripts]
+getorientation = "photo_orientation.getorientation:main"
+setorientation = "photo_orientation.setorientation:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/photo_orientation"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/photo_orientation", "pyproject.toml", "README.md", "Makefile"]
