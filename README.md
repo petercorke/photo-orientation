@@ -76,23 +76,70 @@ make dist
 make upload
 ```
 
+# API
+
+To access the API first import the package
+
+```
+import photo_orientation as po
+```
+
+
+```
+def get_orientation(filepath: str, map: int = 4096) -> tuple[int | None, int | None]:
+```
+returns a 2-tuple containing the orientation value from the EXIF and XMP blocks respectively.  If
+either is missing the corresponding value is `None`. If the values are not `None` but different,
+the metadata is inconsistent and some tools like Apple Photos may deem the image to be corrupt.
+
+The function uses [`mmap`](9https://docs.python.org/3/library/mmap.html) to process the file, and by default maps only the first 4k which is where metadata blocks *typically* live.  
+If the metadata is not found within the mapped region of the file the function will return `(None, None)` -- that doesn't
+mean the metadata is not somewhere else in the file!
+Setting `map=0` would map the whole file.  The length needs to be a multiple of the page size.
+
+
+```
+def set_orientation(filepath: str, new_orientation: int, XMP: bool = True, map: int = 4096) -> bool:
+```
+sets the orientation value in the metadata to `new_orientation`. The value will be set in the EXIF, and
+if `XMP=True` and an XMP block exists, that value will be updated as well. If the metadata are not preexisting,
+the tool will not create them, for that you
+need to use a tool like [`exiftool`](https://exiftool.org).
+
+`set_orientation` is precise and surgical, and changes at most 2 bytes in the metadata blocks.
+
+```
+exif_to_degrees: dict[int, int]
+```
+is a dict that maps an orientation value [1..8] into a rotation in degrees.
+
+
+```
+def rotate_exif(current_exif: int, degrees_cw: int) -> int:
+```
+The values used to represent orientation are non-sequential, see next section.  This function
+returns an orientation value for the orientation `current_exif` rotated by
+a CW rotation of `degrees_cw` in degrees. For example `rotate_exif(1, 90) -> 6`.
+
+
+
 # Notes
 
 ## Image metadata
 
-- The metadata functions support both XMP formats:
+Image metadata is a complex nightmare, layer upon layer of "standards".  Images can have:
+
+- binary coded [EXIF](https://en.wikipedia.org/wiki/Exif) blocks with tagged values (the basis of the [TIFF](https://en.wikipedia.org/wiki/TIFF) file format). Image orientation is tag 0x112.
+- XML encoded metadata following the [XMP](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data model, where
+orientation can be expressed as either:
   - `tiff:Orientation="6"`
   - `<tiff:Orientation>6</tiff:Orientation>`
-- `map=4096` is the default mmap window for orientation reads/writes.
-- Set `map=0` to map the full file.  
 
-## Tutorial: Orientation Modes
+### Image Orientation Modes
 
 This project works with EXIF orientation values. The orientation field in the image metadata 
 describes a transform *from* the image array stored in the
 file as rows and columns (it could be landscape or portrait mode) *to* how it is displayed correctly on the screen.
-
-### Common non-mirrored modes
 
 These are the values most cameras and scanners use for plain rotation:
 
@@ -103,18 +150,11 @@ These are the values most cameras and scanners use for plain rotation:
 | 6 | Rotated 90 CW | 90 degrees clockwise |
 | 8 | Rotated 270 CW | 270 degrees clockwise (or 90 CCW) |
 
-Performing arithmetic on these orientation values is rather crazy, the package include a helper function
-
-```
-def rotate_exif(current_exif: int, degrees_cw: int) -> int:
-```
-
-which returns an orientation value by the specified rotation in degrees, ie. `rotate_exif(1, 90) -> 6`.
 
 ### Full EXIF orientation table
 
 The standard supports additional mirrored transforms but these are uncommon. It can be useful to
-consider how the top-left of the image, as stored, is transformed in the displayed image.
+consider how the top-left corner of the image, as stored, is transformed in the displayed image.
 
 | Value | Meaning | Top-left (0,0) maps to |
 | :--- | :--- | :--- |
