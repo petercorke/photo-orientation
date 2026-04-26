@@ -76,7 +76,9 @@ make dist
 make upload
 ```
 
-## Notes
+# Notes
+
+## Image metadata
 
 - The metadata functions support both XMP formats:
   - `tiff:Orientation="6"`
@@ -140,7 +142,18 @@ consider how the top-left of the image, as stored, is transformed in the display
     - `<tiff:Orientation>6</tiff:Orientation>`
   - This project reads and can update both forms.
 
-### Practical guidance
+## ML model for automatic orientation estimation
+
+The tool uses the [deep-image-orientation-detection](https://huggingface.co/DuarteBarbosa/deep-image-orientation-detection)
+model from Hugging Face.  The model was trained on a huge dataset of 189,018 unique images curated from a number
+of publicly available datasets. Each image is augmented by being rotated in four ways (0°, 90°, 180°, 270°), creating a total of 756,072 samples. This augmented dataset was then split into 604,857 samples for training and 151,215 samples for validation.
+The model achieves 98.82% accuracy on the validation set.
+
+Full details can be found on the [GitHub repo](https://github.com/duartebarbosadev/deep-image-orientation-detection).
+
+Inference is performed using PyTorch with automatic computational fallbacks: CUDA, MPS (Apple Silicon), CPU.
+
+# Practical guidance
 
 - Use `getorientation --check ...` to detect EXIF/XMP mismatch.
 - Use `setorientation --set <value> ...` to apply a fixed orientation value.
