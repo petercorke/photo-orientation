@@ -208,12 +208,22 @@ def set_orientation(
 
                     if tag_id == 0x0112:  # Orientation Tag
                         # The value is in the last 4 bytes of the 12-byte entry.
-                        # For a SHORT (type 3), it's the first 2 of those 4 bytes.
+                        # Check the type to determine write size (SHORT or LONG)
+                        type_offset = curr_pos + 2
+                        type_id = struct.unpack(
+                            fmt_short, mm[type_offset : type_offset + 2]
+                        )[0]
+
                         value_offset = curr_pos + 8
 
-                        # Surgical Write
-                        new_val_bytes = struct.pack(fmt_short, new_orientation)
-                        mm[value_offset : value_offset + 2] = new_val_bytes
+                        # Surgical Write: handle both SHORT (type 3) and LONG (type 4)
+                        if type_id == 3:  # SHORT
+                            new_val_bytes = struct.pack(fmt_short, new_orientation)
+                            mm[value_offset : value_offset + 2] = new_val_bytes
+                        elif type_id == 4:  # LONG
+                            new_val_bytes = struct.pack(fmt_long, new_orientation)
+                            mm[value_offset : value_offset + 4] = new_val_bytes
+
                         updated_exif = True
                         break
 
